@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env
+
+# OS / IDE files
+.DS_Store
+.idea/
+.vscode/
+
+# Build files
+dist/
+build/
+*/test.py
+test.py
+*.log
+
