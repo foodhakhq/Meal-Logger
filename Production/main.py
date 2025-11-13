@@ -42,6 +42,8 @@ claude_client = anthropic.Anthropic(api_key=claude_api_key)
 
 class QueryInput(BaseModel):
     query: str
+
+
 def _extract_top_level_array(raw_text: str) -> str:
     """
     Accepts model JSON as string. Returns a stringified top-level JSON array.
@@ -72,12 +74,12 @@ def _extract_top_level_array(raw_text: str) -> str:
 
     raise HTTPException(status_code=500, detail="No array payload found in model output.")
 
+
 def format_response(final_adjusted_recipe: str) -> str:
     """Format the response as separate JSON objects"""
     # Split into individual JSON objects and filter empty strings
     cleaned = final_adjusted_recipe.replace("```json", "").replace("```", "").strip()
     json_strings = [s for s in cleaned.split('\n\n') if s.strip()]
-
     formatted_jsons = []
     for json_str in json_strings:
         try:
@@ -91,8 +93,10 @@ def format_response(final_adjusted_recipe: str) -> str:
     # Join with double newlines
     return '\n\n'.join(formatted_jsons)
 
+
 def _strip_json_fences(t: str) -> str:
     return t.replace("```json", "").replace("```", "").strip()
+
 
 @app.post("/get_nutritional_info")
 async def get_nutritional_info(query_input: QueryInput, authorization: str = Header(...)):
@@ -108,24 +112,24 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
         raise HTTPException(status_code=401, detail="Invalid or missing credentials")
 
     example_nutritional_data = """
-    [
+    [   
         {
-        "food_title": "Chocolate Cake",
-        "servings": "1",
-        "Calories": "340",
-        "Protein": "6.2",
-        "Carbohydrates": "45.3",
-        "Total Fat": "16.8",
-        "Sodium": "230",
-        "Saturated Fat": "3.5",
-        "Cholesterol": "55",
-        "Sugar": "28.4",
-        "Calcium": "85",
-        "Iron": "2.1",
-        "Potassium": "185",
-        "Vitamin C": "0.2",
-        "Vitamin E": "2.1",
-        "Vitamin D": "0.3"
+        "food_title": "Title of the recipe",
+        "servings": "1 (Strictly supports ONLY ONE NUMERIC value)",
+        "Calories": "800 (Strictly supports ONLY ONE NUMERIC value)",
+        "Protein": "18.2 (Strictly supports ONLY ONE NUMERIC value)",
+        "Carbohydrates": "106.9 (Strictly supports ONLY ONE NUMERIC value)",
+        "Total Fat": "28.1 (Strictly supports ONLY ONE NUMERIC value)",
+        "Sodium": "380 (Strictly supports ONLY ONE NUMERIC value)",
+        "Saturated Fat": "5.9 (Strictly supports ONLY ONE NUMERIC value)",
+        "Cholesterol": "45 (Strictly supports ONLY ONE NUMERIC value)",
+        "Sugar": "4.8 (Strictly supports ONLY ONE NUMERIC value)",
+        "Calcium": "210 (Strictly supports ONLY ONE NUMERIC value)",
+        "Iron": "6.2 (Strictly supports ONLY ONE NUMERIC value)",
+        "Potassium": "890 (Strictly supports ONLY ONE NUMERIC value)",
+        "Vitamin C": "35 (Strictly supports ONLY ONE NUMERIC value)",
+        "Vitamin E": "3.8 (Strictly supports ONLY ONE NUMERIC value)",
+        "Vitamin D": "0.6 (Strictly supports ONLY ONE NUMERIC value)",
         }
     ]
     """
@@ -345,3 +349,4 @@ async def health_check():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
