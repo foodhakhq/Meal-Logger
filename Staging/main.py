@@ -39,6 +39,50 @@ def get_openai_client():
 
 claude_client = anthropic.Anthropic(api_key=claude_api_key)
 
+NUTRITIONAL_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "NutritionalArrayWrapped",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "food_title": {"type": "string"},
+                            "servings": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Calories": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Protein": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Carbohydrates": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Total Fat": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Sodium": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Saturated Fat": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Cholesterol": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Sugar": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Calcium": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Iron": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Potassium": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Vitamin C": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Vitamin E": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+                            "Vitamin D": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"}
+                        },
+                        "required": [
+                            "food_title", "servings", "Calories", "Protein", "Carbohydrates",
+                            "Total Fat", "Sodium", "Saturated Fat", "Cholesterol", "Sugar",
+                            "Calcium", "Iron", "Potassium", "Vitamin C", "Vitamin E", "Vitamin D"
+                        ],
+                        "additionalProperties": False
+                    }
+                }
+            },
+            "required": ["items"],
+            "additionalProperties": False
+        },
+        "strict": True
+    }
+}
 
 class QueryInput(BaseModel):
     query: str
@@ -113,27 +157,27 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
         raise HTTPException(status_code=401, detail="Invalid or missing credentials")
 
     example_nutritional_data = """
-    [   
-        {
-        "food_title": "Title of the recipe",
-        "servings": "1 (Strictly supports ONLY ONE NUMERIC value)",
-        "Calories": "800 (Strictly supports ONLY ONE NUMERIC value)",
-        "Protein": "18.2 (Strictly supports ONLY ONE NUMERIC value)",
-        "Carbohydrates": "106.9 (Strictly supports ONLY ONE NUMERIC value)",
-        "Total Fat": "28.1 (Strictly supports ONLY ONE NUMERIC value)",
-        "Sodium": "380 (Strictly supports ONLY ONE NUMERIC value)",
-        "Saturated Fat": "5.9 (Strictly supports ONLY ONE NUMERIC value)",
-        "Cholesterol": "45 (Strictly supports ONLY ONE NUMERIC value)",
-        "Sugar": "4.8 (Strictly supports ONLY ONE NUMERIC value)",
-        "Calcium": "210 (Strictly supports ONLY ONE NUMERIC value)",
-        "Iron": "6.2 (Strictly supports ONLY ONE NUMERIC value)",
-        "Potassium": "890 (Strictly supports ONLY ONE NUMERIC value)",
-        "Vitamin C": "35 (Strictly supports ONLY ONE NUMERIC value)",
-        "Vitamin E": "3.8 (Strictly supports ONLY ONE NUMERIC value)",
-        "Vitamin D": "0.6 (Strictly supports ONLY ONE NUMERIC value)",
-        }
-    ]
-    """
+[   
+    {
+    "food_title": "Title of the recipe",
+    "servings": "1",
+    "Calories": "800",
+    "Protein": "18.2",
+    "Carbohydrates": "106.9",
+    "Total Fat": "28.1",
+    "Sodium": "380",
+    "Saturated Fat": "5.9",
+    "Cholesterol": "45",
+    "Sugar": "4.8",
+    "Calcium": "210",
+    "Iron": "6.2",
+    "Potassium": "890",
+    "Vitamin C": "35",
+    "Vitamin E": "3.8",
+    "Vitamin D": "0.6"
+    }
+]
+"""
 
     user_prompt = query_input.query
     system_prompt = f"""
@@ -177,7 +221,8 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
               - Display the JSON response even if you have length constraints while providing JSON recipes.
               - Do not include any additional text or explanations
               - Return response in valid JSON format matching the example structure
-              - Default to a **single serving** unless otherwise specified by the user in the {user_prompt}.
+              - The "servings" field must reflect the number of servings the user specified for that item. For example, if the user says "2 servings of coke", set "servings" to "2" and calculate all nutritional values for that many servings.
+              - If the user does not specify a serving count for an item, default "servings" to "1".
 
               ###IMPORTANT: Violating this example recipe format structure would lead to critical error. {example_nutritional_data}
 
@@ -194,50 +239,7 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
             ],
             reasoning_effort="minimal",
             max_completion_tokens=2500,
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "NutritionalArrayWrapped",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "food_title": {"type": "string"},
-                                        "servings": {"type": "string"},
-                                        "Calories": {"type": "string"},
-                                        "Protein": {"type": "string"},
-                                        "Carbohydrates": {"type": "string"},
-                                        "Total Fat": {"type": "string"},
-                                        "Sodium": {"type": "string"},
-                                        "Saturated Fat": {"type": "string"},
-                                        "Cholesterol": {"type": "string"},
-                                        "Sugar": {"type": "string"},
-                                        "Calcium": {"type": "string"},
-                                        "Iron": {"type": "string"},
-                                        "Potassium": {"type": "string"},
-                                        "Vitamin C": {"type": "string"},
-                                        "Vitamin E": {"type": "string"},
-                                        "Vitamin D": {"type": "string"}
-                                    },
-                                    "required": [
-                                        "food_title", "servings", "Calories", "Protein", "Carbohydrates",
-                                        "Total Fat", "Sodium", "Saturated Fat", "Cholesterol", "Sugar",
-                                        "Calcium", "Iron", "Potassium", "Vitamin C", "Vitamin E", "Vitamin D"
-                                    ],
-                                    "additionalProperties": False
-                                }
-                            }
-                        },
-                        "required": ["items"],
-                        "additionalProperties": False
-                    },
-                    "strict": True
-                }
-            },
+            response_format=NUTRITIONAL_SCHEMA,
             stream=False,
         )
         content = (resp.choices[0].message.content or "").strip()
@@ -256,14 +258,13 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
                     {"role": "user", "content": user_prompt},
                 ],
                 max_tokens=6000,
-                response_format={"type": "json_object"},
-                temperature=0.7,
+                response_format=NUTRITIONAL_SCHEMA,
+                temperature=0.2,
                 stream=False,
             )
             content = (resp.choices[0].message.content or "").strip()
-            final_recipe = _strip_json_fences(content)
-            logger.info("Fallback successful with gpt-4o-mini")
-            return PlainTextResponse(content=final_recipe, status_code=200)
+            array_json = _extract_top_level_array(content)
+            return PlainTextResponse(content=array_json, status_code=200)
 
         except Exception as fallback_error:
             logger.error(f"Fallback also failed: {fallback_error}")
