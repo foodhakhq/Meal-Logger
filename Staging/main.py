@@ -9,6 +9,8 @@ from fastapi.responses import Response
 from fastapi.responses import PlainTextResponse
 from openai import OpenAI
 import logging
+import re
+
 
 # Load environment variables
 load_dotenv()
@@ -142,7 +144,18 @@ def format_response(final_adjusted_recipe: str) -> str:
 def _strip_json_fences(t: str) -> str:
     return t.replace("```json", "").replace("```", "").strip()
 
-
+def clean_food_title(title: str) -> str:
+    patterns = [
+        r"^\s*i\s+(just\s+)?(ate|had|have|am\s+eating|am\s+having|drank|consumed)\s+",
+        r"^\s*(just\s+)?(ate|had)\s+",
+        r"^\s*log\s+",
+    ]
+    cleaned = title
+    for p in patterns:
+        cleaned = re.sub(p, "", cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.strip()
+    return cleaned[:1].upper() + cleaned[1:] if cleaned else title
+    
 @app.post("/get_nutritional_info")
 async def get_nutritional_info(query_input: QueryInput, authorization: str = Header(...)):
     """
@@ -244,6 +257,11 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
         )
         content = (resp.choices[0].message.content or "").strip()
         array_json = _extract_top_level_array(content)
+        items = json.loads(array_json)
+        for item in items:
+            if "food_title" in item:
+                item["food_title"] = clean_food_title(item["food_title"])
+        array_json = json.dumps(items, ensure_ascii=False)
         return PlainTextResponse(content=array_json, status_code=200)
 
     except Exception as e:
@@ -264,6 +282,11 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
             )
             content = (resp.choices[0].message.content or "").strip()
             array_json = _extract_top_level_array(content)
+            items = json.loads(array_json)
+            for item in items:
+                if "food_title" in item:
+                    item["food_title"] = clean_food_title(item["food_title"])
+            array_json = json.dumps(items, ensure_ascii=False)
             return PlainTextResponse(content=array_json, status_code=200)
 
         except Exception as fallback_error:
@@ -351,5 +374,3 @@ async def health_check():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
