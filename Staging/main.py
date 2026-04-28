@@ -298,7 +298,7 @@ async def get_nutritional_info(query_input: QueryInput, authorization: str = Hea
     # try:
     #     #raise Exception({'type': 'error', 'error': {'details': None, 'type': 'overloaded_error', 'message': 'Overloaded'}})
     #     with claude_client.messages.stream(
-    #             model="claude-3-7-sonnet-20250219",
+    #             model="claude-sonnet-4-6",
     #             max_tokens=8192,
     #             temperature=0,
     #             system=system_prompt,
