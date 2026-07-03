@@ -22,7 +22,7 @@ jsonpointer==3.0.0
 langchain-core==0.3.30
 langchain-google-vertexai==2.0.11
 langsmith==0.2.11
-numpy==2.2.1
+numpy==2.0.2
 orjson==3.10.14
 packaging==24.2
 proto-plus==1.25.0

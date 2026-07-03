@@ -155,7 +155,7 @@ def clean_food_title(title: str) -> str:
         cleaned = re.sub(p, "", cleaned, flags=re.IGNORECASE)
     cleaned = cleaned.strip()
     return cleaned[:1].upper() + cleaned[1:] if cleaned else title
-    
+
 @app.post("/get_nutritional_info")
 async def get_nutritional_info(query_input: QueryInput, authorization: str = Header(...)):
     """
