@@ -20,3 +20,33 @@ build/
 test.py
 *.log
 
+
+# Meal-Logger env files
+Production/.env
+Production/.env.*
+
+# Meal-Logger virtual environment
+Production/meal/
+
+# Python cache inside Production
+Production/__pycache__/
+Production/**/__pycache__/
+Production/*.pyc
+Production/**/*.pyc
+Production/*.pyo
+Production/**/*.pyo
+Production/*.pyd
+Production/**/*.pyd
+
+# Python cache inside Staging
+Staging/__pycache__/
+Staging/**/__pycache__/
+Staging/*.pyc
+Staging/**/*.pyc
+Staging/*.pyo
+Staging/**/*.pyo
+Staging/*.pyd
+Staging/**/*.pyd
+
+# General safety
+.DS_Store
